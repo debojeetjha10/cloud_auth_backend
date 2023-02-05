@@ -64,7 +64,17 @@ app.post('/login', async (req, res) => {
     }
 })
 
+app.post("/verifyotp", authenticateToken, (req, res) => {
+    try {
+        const otpFromServer = otpGenerator(req.user.key);
+        if (otpFromServer === req.body.otp) res.sendStatus(200);
+        else res.sendStatus(401);
 
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send(err.message);
+    }
+})
 
 app.listen(8080, () => {
     console.log("Server is running on PORT: ", process.env.PORT)
