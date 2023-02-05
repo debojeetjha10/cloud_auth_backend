@@ -2,12 +2,66 @@ const express = require('express');
 const mongoose = require('mongoose');
 mongoose.set('strictQuery', true)
 require('dotenv').config();
+const UserModel = require("./models/users");
+const uuid4 = require('uuid').v4;
+const JWT = require('jsonwebtoken');
+const authenticateToken = require('./middlewares/authorizeToken');
+const otpGenerator = require('./helpers/otpGenerator');
 
 mongoose.connect(process.env.MONGO_URI);
 const app = express();
+app.use(express.json());
 
 app.get("/", (req, res) => {
     res.send("Hello");
+})
+
+app.post("/createuser", async (req, res) => {
+    try {
+        const newUser = UserModel({
+            id: req.body.id,
+            password: req.body.password,
+            key: uuid4()
+        })
+        await newUser.save();
+        res.status(201);
+        res.send({ key: newUser.key });
+    } catch (err) {
+        console.log(err.message);
+        res.status(500);
+        res.send(err.message);
+    }
+})
+
+app.post('/login', async (req, res) => {
+    if (!req.body.id || !req.body.password) {
+        res.status(401).send("NO CREDENTIALS FOUND");
+    }
+    try {
+
+        const user = await UserModel.findOne({
+            id: req.body.id
+        })
+        if (!user) res.sendStatus(401);
+
+        if (req.body.password !== user.password) {
+            res.sendStatus(401);
+        }
+
+        const token = JWT.sign(
+            {
+                id: user.id,
+                key: user.key
+            },
+            process.env.JWT_KEY,
+            { expiresIn: '100s' }
+        )
+
+        res.json({ token: token })
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send(err.message);
+    }
 })
 
 
