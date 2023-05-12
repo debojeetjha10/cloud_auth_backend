@@ -7,10 +7,13 @@ const uuid4 = require('uuid').v4;
 const JWT = require('jsonwebtoken');
 const authenticateToken = require('./middlewares/authorizeToken');
 const otpGenerator = require('./helpers/otpGenerator');
+const qrcode = require('qrcode-terminal');
+const cors = require('cors');
 
 mongoose.connect(process.env.MONGO_URI);
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.get("/", (req, res) => {
     res.send("Hello");
@@ -24,6 +27,10 @@ app.post("/createuser", async (req, res) => {
             key: uuid4()
         })
         await newUser.save();
+        //console log the key
+        console.log("NEW USER CREATED", newUser);
+        qrcode.generate(newUser.key, { small: true },
+            function (qrcode) { console.log(qrcode) });
         res.status(201);
         res.send({ key: newUser.key });
     } catch (err) {
@@ -54,7 +61,7 @@ app.post('/login', async (req, res) => {
                 key: user.key
             },
             process.env.JWT_KEY,
-            { expiresIn: '100s' }
+            { expiresIn: '5m' }
         )
 
         res.json({ token: token })
@@ -76,6 +83,6 @@ app.post("/verifyotp", authenticateToken, (req, res) => {
     }
 })
 
-app.listen(8080, () => {
+app.listen(process.env.PORT, () => {
     console.log("Server is running on PORT: ", process.env.PORT)
 })
