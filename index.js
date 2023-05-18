@@ -52,10 +52,14 @@ app.post('/login', async (req, res) => {
         const user = await UserModel.findOne({
             id: req.body.id
         })
-        if (!user) res.sendStatus(401);
+        if (!user) {
+            res.sendStatus(401);
+            return;
+        }
 
         if (req.body.password !== user.password) {
             res.sendStatus(401);
+            return;
         }
 
         const token = JWT.sign(
@@ -70,7 +74,8 @@ app.post('/login', async (req, res) => {
         res.json({ token: token })
     } catch (err) {
         console.log(err.message);
-        res.status(500).send(err.message);
+        res.statusCode = 500;
+        res.send(err.message ?? err.msg)
     }
 })
 

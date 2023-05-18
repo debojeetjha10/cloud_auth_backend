@@ -1,7 +1,7 @@
 const { createHash } = require("crypto");
 const { getChartoConstValue } = require('../constants')
 const otpGenerator = (key) => {
-  key = key + Math.floor(Date.now() / 100000).toString();
+  key = key + Math.floor(Date.now() / 10000).toString();
   key = createHash("sha256").update(key).digest("hex");
   console.log(key)
   let otp = '';
