@@ -9,6 +9,9 @@ const authenticateToken = require('./middlewares/authorizeToken');
 const otpGenerator = require('./helpers/otpGenerator');
 const qrcode = require('qrcode-terminal');
 const cors = require('cors');
+const https = require('https')
+const fs = require("fs");
+
 
 mongoose.connect(process.env.MONGO_URI);
 const app = express();
@@ -83,6 +86,16 @@ app.post("/verifyotp", authenticateToken, (req, res) => {
     }
 })
 
-app.listen(process.env.PORT, () => {
-    console.log("Server is running on PORT: ", process.env.PORT)
-})
+// Creating object of key and certificate
+// for SSL
+const options = {
+  key: fs.readFileSync("server.key"),
+  cert: fs.readFileSync("server.cert"),
+};
+  
+// Creating https server by passing
+// options and app object
+https.createServer(options, app)
+.listen(3000, function (req, res) {
+  console.log("Server started at port 3000");
+});
